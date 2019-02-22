@@ -91,7 +91,7 @@ public class Main {
         //        main.test_trade_pay(tradeService);
 
         // 测试查询当面付2.0交易
-        //        main.test_trade_query();
+        //main.test_trade_query();
 
         // 测试当面付2.0退货
         //        main.test_trade_refund();
@@ -285,7 +285,7 @@ public class Main {
     // 测试当面付2.0查询订单
     public void test_trade_query() {
         // (必填) 商户订单号，通过此商户订单号查询当面付的交易状态
-        String outTradeNo = "tradepay14817938139942440181";
+        String outTradeNo = "tradeprecreate15485531767494294996";
 
         // 创建查询请求builder，设置请求参数
         AlipayTradeQueryRequestBuilder builder = new AlipayTradeQueryRequestBuilder()
@@ -376,7 +376,7 @@ public class Main {
 
         // (必填) 订单总金额，单位为元，不能超过1亿元
         // 如果同时传入了【打折金额】,【不可打折金额】,【订单总金额】三者,则必须满足如下条件:【订单总金额】=【打折金额】+【不可打折金额】
-        String totalAmount = "0.01";
+        String totalAmount = "9999";
 
         // (可选) 订单不可打折金额，可以配合商家平台配置折扣活动，如果酒水不参与打折，则将对应金额填写至此字段
         // 如果该值未传入,但传入了【订单总金额】,【打折金额】,则该值默认为【订单总金额】-【打折金额】
@@ -419,7 +419,7 @@ public class Main {
                 .setUndiscountableAmount(undiscountableAmount).setSellerId(sellerId).setBody(body)
                 .setOperatorId(operatorId).setStoreId(storeId).setExtendParams(extendParams)
                 .setTimeoutExpress(timeoutExpress)
-                //                .setNotifyUrl("http://www.test-notify-url.com")//支付宝服务器主动通知商户服务器里指定的页面http路径,根据需要设置
+                                .setNotifyUrl("http://iq8rsk.natappfree.cc/order/alipay_callback.do")//支付宝服务器主动通知商户服务器里指定的页面http路径,根据需要设置
                 .setGoodsDetailList(goodsDetailList);
 
         AlipayF2FPrecreateResult result = tradeService.tradePrecreate(builder);

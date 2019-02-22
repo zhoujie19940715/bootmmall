@@ -40,7 +40,7 @@ public class SnowflakeIdFactory {
         this.datacenterId = datacenterId;
     }
 
-    public synchronized long nextId() {
+    public  synchronized long nextId() {
         long timestamp = timeGen();
         if (timestamp < lastTimestamp) {
             //服务器时钟被调整了,ID生成器停止服务.
@@ -72,8 +72,8 @@ public class SnowflakeIdFactory {
     }
 
     public static void testProductIdByMoreThread(int dataCenterId, int workerId, int n) throws InterruptedException {
-        List<Thread> tlist = new ArrayList<>();
-        Set<Long> setAll = new HashSet<>();
+        List<Thread> tlist = new ArrayList<>(); // 有序不唯一  LinkedList 数组  ArrayList链表 HashMap 数组+链表，线程不安全，速度快
+        Set<Long> setAll = new HashSet<>();  // 无序唯一
         CountDownLatch cdLatch = new CountDownLatch(10);
         long start = System.currentTimeMillis();
         int threadNo = dataCenterId;
@@ -155,7 +155,7 @@ public class SnowflakeIdFactory {
     public static void main(String[] args) {
         /** case1: 测试每秒生产id个数?
          *   结论: 每秒生产id个数300w+ */
-        testPerSecondProductIdNums();
+      //  testPerSecondProductIdNums();
 
         /** case2: 单线程-测试多个生产者同时生产N个id,验证id是否有重复?
          *   结论: 验证通过,没有重复. */
@@ -164,14 +164,14 @@ public class SnowflakeIdFactory {
 
         /** case3: 多线程-测试多个生产者同时生产N个id, 全部id在全局范围内是否会重复?
          *   结论: 验证通过,没有重复. */
-       /* try {
+        try {
             testProductIdByMoreThread(1,2,100000);//单机测试此场景,性能损失至少折半!
         } catch (InterruptedException e) {
             e.printStackTrace();
-        }*/
-        SnowflakeIdFactory idWorker = new SnowflakeIdFactory(1, 2);
+        }
+       /* SnowflakeIdFactory idWorker = new SnowflakeIdFactory(1, 2);
         long id = idWorker.nextId();
-        log.info("id是{}",id);
+        log.info("id是{}",id);*/
     }
 
 }

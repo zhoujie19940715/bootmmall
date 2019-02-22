@@ -13,13 +13,13 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AccountWallet {
-   private Integer id;
-   private String userOpenId;
-   private BigDecimal userAmount;
-   private Date createTime;
+    private Integer id;
+    private String userOpenId;
+    private BigDecimal userAmount;
+    private Date createTime;
     private Date updateTime;
-   private String payPassword;
-   private Integer isOpen;
+    private String payPassword;
+    private Integer isOpen;
     private String checkKey;
     private Integer version;
 }

@@ -20,10 +20,7 @@ import com.zhoujie.mall.common.ServerResponse;
 import com.zhoujie.mall.dao.*;
 import com.zhoujie.mall.pojo.*;
 import com.zhoujie.mall.service.IOrderService;
-import com.zhoujie.mall.util.BigDecimalUtil;
-import com.zhoujie.mall.util.DateTimeUtil;
-import com.zhoujie.mall.util.FTPUtil;
-import com.zhoujie.mall.util.PropertiesUtil;
+import com.zhoujie.mall.util.*;
 import com.zhoujie.mall.vo.*;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
@@ -65,9 +62,9 @@ public class OrderServiceImpl implements IOrderService {
         resultMap.put("orderNo", String.valueOf(order.getOrderNo()));
         // (必填) 商户网站订单系统中唯一订单号，64个字符以内，只能包含字母、数字、下划线，
         // 需保证商户系统端不能重复，建议通过数据库sequence生成，
-        String outTradeNo = "tradeprecreate" + System.currentTimeMillis()
-                + (long) (Math.random() * 10000000L);
-
+        /*String outTradeNo = "tradeprecreate" + System.currentTimeMillis()
+                + (long) (Math.random() * 10000000L);*/
+        String outTradeNo = orderNo.toString();
         // (必填) 订单标题，粗略描述用户的支付目的。如“xxx品牌xxx门店当面付扫码消费”
         String subject = new StringBuilder("happymall扫码支付，订单号:").append(outTradeNo).toString();
 
@@ -138,24 +135,25 @@ public class OrderServiceImpl implements IOrderService {
             case SUCCESS:
                 log.info("支付宝预下单成功: )");
                 AlipayTradePrecreateResponse response = result.getResponse();
+                //简单打印应答
                 dumpResponse(response);
 
                 File folder = new File(path);
                 if (!folder.exists()) {
                     folder.setWritable(true);
-                    folder.mkdirs();
+                    folder.mkdirs();//创建目录
                 }
                 // 需要修改为运行机器上的路径
                 String qrPath = String.format(path + "/qr-%s.png", response.getOutTradeNo());
                 String qrFileName = String.format("qr-%s.png", response.getOutTradeNo());
-                ZxingUtils.getQRCodeImge(response.getQrCode(), 256, qrPath);
+               // ZxingUtils.getQRCodeImge(response.getQrCode(), 256, qrPath);
                 File targetFile = new File(path, qrFileName);
 
-                try {
+                /*try {
                     FTPUtil.uploadFile(Lists.newArrayList(targetFile));
                 } catch (IOException e) {
                     log.info("上传二维码异常", e);
-                }
+                }*/
                 log.info("qrPath:" + qrPath);
                 String qrUrl = PropertiesUtil.getProperty("ftp.server.http.prefix") + targetFile.getName();
                 resultMap.put("qrUrl", qrUrl);
@@ -221,12 +219,18 @@ public class OrderServiceImpl implements IOrderService {
         return ServerResponse.createByError();
     }
 
+    /**
+     * 创建订单
+     * @param userId
+     * @param shippingId
+     * @return
+     */
     public ServerResponse createOrder(Integer userId, Integer shippingId) {
         Order order = null;
         List<OrderItem> orderItemList = null;
         // ①获取用户的所有购物车
         List<Cart> cartList = cartMapper.selectCheckedCartByUserId(userId);
-        //②生成购物车中所有订单详情的数据
+        //②生成购物车中所有订单详情的数据   cartItem to oderItem
         ServerResponse listServerResponse = this.getCartOrderItem(userId, cartList);
         if (!listServerResponse.isSuccess()) {//如果产品的状态和数量出现问题
             return listServerResponse;
@@ -333,8 +337,7 @@ public class OrderServiceImpl implements IOrderService {
 
 
     /**
-     * 生成订单
-     *
+     * 生成订单对象
      * @param userId
      * @param shipping
      * @param payment
@@ -346,11 +349,11 @@ public class OrderServiceImpl implements IOrderService {
         order.setOrderNo(orderNo);
         order.setStatus(Const.OrderStatusEnum.NO_PAY.getCode());
         order.setPostage(0);
-        order.setPaymentType(Const.PaymentTypeEnum.ONLINE_PAY.getCode());
-        order.setPayment(payment);
-        order.setUserId(userId);
-        order.setShippingId(shipping);
-        //发货时间、付款时间等等
+        order.setPaymentType(Const.PaymentTypeEnum.ONLINE_PAY.getCode());//订单状态
+        order.setPayment(payment);//支付金额
+        order.setUserId(userId);//用户id
+        order.setShippingId(shipping);//地址id
+        //todo 发货时间、付款时间等等
         int rowCount = orderMapper.insert(order);
         if (rowCount > 0) {
             return order;
@@ -367,13 +370,21 @@ public class OrderServiceImpl implements IOrderService {
         return payment;
     }
 
-    //生成订单号
+    //使用snowflack 生成订单号
     private Long generateOrderNo() {
-        Long time = System.currentTimeMillis();
-        return time + new Random().nextInt(100);
+       /* Long time = System.currentTimeMillis();
+        return time + new Random().nextInt(100);*/
+        SnowflakeIdFactory idWorker = new SnowflakeIdFactory(1, 2);
+        return idWorker.nextId();
+
     }
 
-    //根据用户id和购物车列表获取订单列表
+    /**
+     * 取消订单
+     * @param userId
+     * @param orderNo
+     * @return
+     */
     public ServerResponse<String> cancel(Integer userId, Long orderNo) {
         Order order = orderMapper.selectByUserIdAndOrderNo(userId, orderNo);
         if (order == null) {
@@ -416,6 +427,12 @@ public class OrderServiceImpl implements IOrderService {
         return ServerResponse.createBySuccess(orderProductVo);
     }
 
+    /**
+     * 查看订单详情
+     * @param userId
+     * @param orderNo
+     * @return
+     */
     public ServerResponse<OrderVo> getOrderDetail(Integer userId, Long orderNo) {
         Order order = orderMapper.selectByUserIdAndOrderNo(userId, orderNo);
         if (order != null) {
@@ -443,6 +460,7 @@ public class OrderServiceImpl implements IOrderService {
         for (Cart cartItem : cartList) {
             OrderItem orderItem = new OrderItem();
             Product product = productMapper.selectByPrimaryKey(cartItem.getProductId());
+            //校验状态
             if (Const.ProductStatusEnum.ON_SALE.getCode() != product.getStatus()) {
                 return ServerResponse.createByErrorMessage("产品" + product.getName() + "不是在线售卖状态");
             }

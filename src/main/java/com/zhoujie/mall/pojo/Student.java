@@ -50,7 +50,7 @@ package com.zhoujie.mall.pojo;
     public int compareTo(Student o) {
         //根据年龄
         int num =new Integer(this.age).compareTo(new Integer(o.age));
-        //年龄相同再根据地址
+        //年龄相同再根据姓名
         if(num ==0)
             return this.name.compareTo(o.name);
         return num;

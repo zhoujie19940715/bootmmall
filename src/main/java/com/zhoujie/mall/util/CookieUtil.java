@@ -14,7 +14,7 @@ import javax.servlet.http.HttpServletResponse;
 public class CookieUtil {
 
    // private final static String COOKIE_DOMAIN = ".happymmall.com";
-   private final static String COOKIE_DOMAIN = "zhoujie.online";
+   private final static String COOKIE_DOMAIN = "natappfree.cc";
    private final static String COOKIE_NAME = "mmall_login_token";
 
 

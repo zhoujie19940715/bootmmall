@@ -21,8 +21,5 @@ spring:
   jpa:
     database: mysql
     show-sql: true
-  profiles:
-    active: dev
 mybatis:
   mapper-locations: classpath:mapper/*.xml
-debug: true

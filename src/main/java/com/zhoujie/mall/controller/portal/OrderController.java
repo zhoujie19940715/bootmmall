@@ -11,6 +11,7 @@ import com.zhoujie.mall.pojo.User;
 import com.zhoujie.mall.service.IOrderService;
 import com.zhoujie.mall.util.CookieUtil;
 import com.zhoujie.mall.util.JsonUtil;
+import com.zhoujie.mall.util.RedisShardedPoolUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -31,6 +32,13 @@ public class OrderController {
     private IOrderService iOrderService;
 
     //http://localhost:8080/order/create.do?shippingId=5
+
+    /**
+     * 创建订单
+     * @param request
+     * @param shippingId
+     * @return
+     */
     @RequestMapping("create.do")
     @ResponseBody
     public ServerResponse<Object> create(HttpServletRequest request, Integer shippingId){
@@ -40,9 +48,16 @@ public class OrderController {
         }
         return iOrderService.createOrder(user.getId(),shippingId);
     }
+
+    /**
+     * 取消订单
+     * @param request
+     * @param orderNo
+     * @return
+     */
     @RequestMapping("cancel.do")
     @ResponseBody
-    public ServerResponse cancel(HttpServletRequest request, HttpSession session, Long orderNo){
+    public ServerResponse cancel(HttpServletRequest request, Long orderNo){
         User user = JsonUtil.string2Obj(CookieUtil.readLoginToken(request),User.class);
         if(user ==null){
             return ServerResponse.createByErrorCodeMessage(ResponseCode.NEED_LOGIN.getCode(),ResponseCode.NEED_LOGIN.getDesc());
@@ -53,7 +68,7 @@ public class OrderController {
 
     @RequestMapping("get_order_cart_product.do")
     @ResponseBody
-    public ServerResponse getOrderCartProduct(HttpServletRequest request, HttpSession session){
+    public ServerResponse getOrderCartProduct(HttpServletRequest request){
         User user = JsonUtil.string2Obj(CookieUtil.readLoginToken(request),User.class);
         if(user ==null){
             return ServerResponse.createByErrorCodeMessage(ResponseCode.NEED_LOGIN.getCode(),ResponseCode.NEED_LOGIN.getDesc());
@@ -61,10 +76,15 @@ public class OrderController {
         return iOrderService.getOrderCartProduct(user.getId());
     }
 
+    /**
+     * 获取订单详情
+     * @param request
+     * @param orderNo
+     * @return
+     */
     @RequestMapping("detail.do")
     @ResponseBody
-    public ServerResponse detail(HttpServletRequest request, HttpSession session, Long orderNo){
-       // User user = (User)session.getAttribute(Const.CURRENT_USER);
+    public ServerResponse detail(HttpServletRequest request, Long orderNo){
         User user = JsonUtil.string2Obj(CookieUtil.readLoginToken(request),User.class);
         if(user ==null){
             return ServerResponse.createByErrorCodeMessage(ResponseCode.NEED_LOGIN.getCode(),ResponseCode.NEED_LOGIN.getDesc());
@@ -72,11 +92,18 @@ public class OrderController {
         return iOrderService.getOrderDetail(user.getId(),orderNo);
     }
 
+    /**
+     * 查看所有订单
+     * @param request
+     * @param pageNum
+     * @param pageSize
+     * @return
+     */
     @RequestMapping("list.do")
     @ResponseBody
-    public ServerResponse list(HttpServletRequest request, HttpSession session, @RequestParam(value = "pageNum",defaultValue = "1") int pageNum, @RequestParam(value = "pageSize",defaultValue = "10") int pageSize){
-        //User user = (User)session.getAttribute(Const.CURRENT_USER);
-        User user = JsonUtil.string2Obj(CookieUtil.readLoginToken(request),User.class);
+    public ServerResponse list(HttpServletRequest request, @RequestParam(value = "pageNum",defaultValue = "1") int pageNum, @RequestParam(value = "pageSize",defaultValue = "10") int pageSize){
+        String loginToken = CookieUtil.readLoginToken(request);
+        User user = JsonUtil.string2Obj(RedisShardedPoolUtil.get(loginToken),User.class);
         if(user ==null){
             return ServerResponse.createByErrorCodeMessage(ResponseCode.NEED_LOGIN.getCode(),ResponseCode.NEED_LOGIN.getDesc());
         }
@@ -84,13 +111,11 @@ public class OrderController {
     }
 
 
-
     //####1.支付
     @RequestMapping("pay.do")
     @ResponseBody
-    public ServerResponse pay(HttpSession session, Long orderNo, HttpServletRequest request){
-       // User user = (User) session.getAttribute(Const.CURRENT_USER);
-        User user = JsonUtil.string2Obj(CookieUtil.readLoginToken(request),User.class);
+    public ServerResponse pay( Long orderNo, HttpServletRequest request){
+        User user = JsonUtil.string2Obj(RedisShardedPoolUtil.get(CookieUtil.readLoginToken(request)),User.class);
         if (user == null){
             return ServerResponse.createByErrorCodeMessage(ResponseCode.NEED_LOGIN.getCode(),ResponseCode.NEED_LOGIN.getDesc());
         }
@@ -98,7 +123,11 @@ public class OrderController {
         return iOrderService.pay(orderNo,user.getId(),path);
     }
 
-
+    /**
+     * 支付宝回调的接口
+     * @param request
+     * @return
+     */
     @RequestMapping("alipay_callback.do")
     @ResponseBody
     public Object alipayCallback(HttpServletRequest request) {
@@ -117,7 +146,7 @@ public class OrderController {
         }
         log.info("支付宝回调,sign:{},trade_status:{},参数:{}", params.get("sign"), params.get("trade_status"), params.toString());
 
-        //非常重要,验证回调的正确性,是不是支付宝发的.并且呢还要避免重复通知.
+        //todo 非常重要,验证回调的正确性,是不是支付宝发的.并且呢还要避免重复通知.
 
         params.remove("sign_type");
         try {
@@ -136,10 +165,20 @@ public class OrderController {
         }
         return Const.AlipayCallback.RESPONSE_FAILED;
     }
+
+
+    /**
+     * 查询交易状态
+     * @param session
+     * @param orderNo
+     * @return
+     */
     @RequestMapping("query_order_pay_status.do")
     @ResponseBody
-    public ServerResponse<Boolean> queryOrderPayStatus(HttpSession session, Long orderNo){
-        User user = (User)session.getAttribute(Const.CURRENT_USER);
+    public ServerResponse<Boolean> queryOrderPayStatus(HttpSession session,HttpServletRequest request, Long orderNo){
+        String loginToken = CookieUtil.readLoginToken(request);
+        String jsonObject = RedisShardedPoolUtil.get(loginToken);
+        User user = JsonUtil.string2Obj(jsonObject,User.class);
         if(user ==null){
             return ServerResponse.createByErrorCodeMessage(ResponseCode.NEED_LOGIN.getCode(),ResponseCode.NEED_LOGIN.getDesc());
         }
