@@ -1,71 +1,74 @@
 package com.zhoujie.mall.controller.portal;
 
+import com.zhoujie.mall.common.ServerResponse;
 import com.zhoujie.mall.pojo.AccountWallet;
+import com.zhoujie.mall.service.AccountWalletService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 
-import javax.servlet.http.HttpServletRequest;
-import java.math.BigDecimal;
+import java.util.List;
 
 @Slf4j
-@Controller
+@RestController
 @RequestMapping("/wallet/")
 public class WalletController {
     @Autowired
-    private com.zhoujie.mall.service.AccountWalletService accountWalletService;
+    private AccountWalletService accountWalletService;
 
-    /**
-     * 针对业务系统高并发-----改用户钱包数据余额，采用乐观锁修
-     *
-     * @return
-     */
-    @RequestMapping(value = "walleroptimisticlock.do", method = RequestMethod.POST)
-    @ResponseBody
-    public String walleroptimisticlock(HttpServletRequest request) {
-        String result = "";
-        try {
-            String openId = request.getParameter("openId") == null ? null
-                    : request.getParameter("openId").trim(); // 用户唯一编号
-            String openType = request.getParameter("openType") == null ? null
-                    : request.getParameter("openType").trim(); // 1:代表增加，2：代表减少
-            String amount = request.getParameter("amount") == null ? null
-                    : request.getParameter("amount").trim(); // 金额
+    @PostMapping(value = "/add")
+    public ServerResponse add(AccountWallet accountWallet) {
 
-            if (StringUtils.isEmpty(openId)) {
-                return "openId is null";
-            }
-            if (StringUtils.isEmpty(openType)) {
-                return "openId is null";
-            }
-            if (StringUtils.isEmpty(amount)) {
-                return "account is null";
-            }
-            AccountWallet wallet = accountWalletService.selectByOpenId(openId);
-
-            // 用户操作金额
-            BigDecimal cash = BigDecimal.valueOf(Double.parseDouble(amount));
-            cash.doubleValue();
-            cash.floatValue();
-            if (Integer.parseInt(openType) == 1) {
-                wallet.setUserAmount(wallet.getUserAmount().add(cash));
-            } else if (Integer.parseInt(openType) == 2) {
-                wallet.setUserAmount(wallet.getUserAmount().subtract(cash));
-            }
-
-            int target = accountWalletService.updateAccountWallet(wallet);
-            System.out.println("修改用户金额是否：" + (target == 1 ? "成功" : "失败"));
-            log.info("修改用户金额是否：" + (target == 1 ? "成功" : "失败"));
-        } catch (Exception e) {
-            result = e.getMessage();
-            return result;
+        int count = accountWalletService.insert(accountWallet);
+        if (count > 0) {
+            return ServerResponse.createBySuccessMessage("添加成功！");
+        } else {
+            return ServerResponse.createByErrorMessage("添加失败！");
         }
+    }
 
-        return "success";
+    @PostMapping(value = "/delete")
+    public ServerResponse delete(String opendId) {
+        int count = accountWalletService.delete(opendId);
+        if (count > 0) {
+            return ServerResponse.createBySuccessMessage("删除成功！");
+        } else {
+            return ServerResponse.createByErrorMessage("删除失败！");
+        }
+    }
+
+    @PostMapping(value = "/update")
+    public ServerResponse update(AccountWallet accountWallet) {
+        int count = accountWalletService.updateAccountWallet(accountWallet);
+        if (count > 0) {
+            return ServerResponse.createBySuccessMessage("更新成功！");
+        } else {
+            return ServerResponse.createByErrorMessage("更新失败！");
+        }
+    }
+
+    @GetMapping(value = "/selectone")
+    public ServerResponse<AccountWallet> selectOne(String opendId) {
+        AccountWallet accountWallet = accountWalletService.selectByOpenId(opendId);
+        return ServerResponse.createBySuccess(accountWallet);
+    }
+
+    @GetMapping(value = "/selectall")
+    public ServerResponse<List<AccountWallet>> selectAll(AccountWallet accountWallet) {
+
+        List<AccountWallet> accountWalletList = accountWalletService.accountWalletList();
+
+        return ServerResponse.createBySuccess(accountWalletList);
+    }
+    @RequestMapping(value = "/hello")
+    public Object hello(){
+        String sentence = "hello docker!";
+        System.out.println(sentence);
+        return sentence;
     }
 
 }

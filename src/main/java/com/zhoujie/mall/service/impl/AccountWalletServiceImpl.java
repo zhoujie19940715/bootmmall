@@ -6,18 +6,36 @@ import com.zhoujie.mall.service.AccountWalletService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class AccountWalletServiceImpl implements AccountWalletService {
     @Autowired
     AccountWalletMapper accountWalletMapper;
+
+    @Override
     public AccountWallet selectByOpenId(String openId) {
-        // TODO Auto-generated method stub
         return accountWalletMapper.selectByOpenId(openId);
     }
 
-    public int updateAccountWallet(AccountWallet record) {
-        // TODO Auto-generated method stub
-        return accountWalletMapper.updateAccountWallet(record);
+    @Override
+    public List<AccountWallet> accountWalletList() {
+
+        return accountWalletMapper.selectAll();
     }
 
+    @Override
+    public int updateAccountWallet(AccountWallet record) {
+        return accountWalletMapper.updateByOpenId(record);
+    }
+
+    @Override
+    public int insert(AccountWallet record) {
+       return accountWalletMapper.insert(record);
+    }
+
+    @Override
+    public int delete(String openId) {
+        return accountWalletMapper.deleteByOpenId(openId);
+    }
 }
