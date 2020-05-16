@@ -41,11 +41,11 @@
   </delete>
 
   <insert id="insert" parameterType="com.zhoujie.mall.pojo.AccountWallet" >
-    insert into account_wallet (id, user_open_id, user_amount, 
+    insert into account_wallet ( user_open_id, user_amount,
       create_time, update_time, pay_password, 
       is_open, check_key, version
       )
-    values (#{id,jdbcType=INTEGER}, #{userOpenId,jdbcType=VARCHAR}, #{userAmount,jdbcType=DECIMAL}, 
+    values (#{userOpenId,jdbcType=VARCHAR}, #{userAmount,jdbcType=DECIMAL},
       now(), now(), #{payPassword,jdbcType=VARCHAR},
       #{isOpen,jdbcType=INTEGER}, #{checkKey,jdbcType=VARCHAR}, #{version,jdbcType=INTEGER}
       )

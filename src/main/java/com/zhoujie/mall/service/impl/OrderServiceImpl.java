@@ -10,7 +10,6 @@ import com.alipay.demo.trade.model.builder.AlipayTradePrecreateRequestBuilder;
 import com.alipay.demo.trade.model.result.AlipayF2FPrecreateResult;
 import com.alipay.demo.trade.service.AlipayTradeService;
 import com.alipay.demo.trade.service.impl.AlipayTradeServiceImpl;
-import com.alipay.demo.trade.utils.ZxingUtils;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.google.common.collect.Lists;
@@ -29,13 +28,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.*;
 
 @Service("iOrderService")
+@Transactional(isolation = Isolation.DEFAULT,propagation = Propagation.REQUIRED)
 public class OrderServiceImpl implements IOrderService {
 
     private static final Logger log = LoggerFactory.getLogger(OrderServiceImpl.class);

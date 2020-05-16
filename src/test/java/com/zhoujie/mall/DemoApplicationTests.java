@@ -3,13 +3,14 @@ package com.zhoujie.mall;
 import com.zhoujie.mall.dao.AccountWalletMapper;
 import com.zhoujie.mall.dao.UserMapper;
 import com.zhoujie.mall.pojo.AccountWallet;
+import com.zhoujie.mall.util.SnowflakeIdFactory;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.util.List;
+import java.math.BigDecimal;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -20,9 +21,11 @@ public class DemoApplicationTests {
     @Autowired
     AccountWalletMapper accountWalletMapper;
 
+
     @Test
     public void contextLoads() {
         System.out.println(userMapper.checkUsername("admin"));
+
     }
     @Test
     public void selectByOpenId() {
@@ -35,8 +38,19 @@ public class DemoApplicationTests {
     }
     @Test
     public void deleteByUserOpenId() {
-       // System.out.println(accountWalletMapper.deleteByUserOpenId("333"));
+        for (int i = 0;i< 1000000;i ++) {
+            AccountWallet wallet = new AccountWallet();
+            wallet.setUserAmount(new BigDecimal(333 + i * 11));
+            wallet.setIsOpen(1);
+            wallet.setPayPassword(Long.toString(System.currentTimeMillis()).substring(3, 9));
+            wallet.setVersion(0);
+            SnowflakeIdFactory idWorker = new SnowflakeIdFactory(1, 2);
+            wallet.setUserOpenId(Long.toString(idWorker.nextId()));
+            wallet.setCheckKey(Long.toString(idWorker.nextId()));
+            accountWalletMapper.insert(wallet);
+        }
     }
+
 
 }
 

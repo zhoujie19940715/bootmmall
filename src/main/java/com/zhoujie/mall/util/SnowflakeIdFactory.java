@@ -1,6 +1,7 @@
 package com.zhoujie.mall.util;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
@@ -164,14 +165,18 @@ public class SnowflakeIdFactory {
 
         /** case3: 多线程-测试多个生产者同时生产N个id, 全部id在全局范围内是否会重复?
          *   结论: 验证通过,没有重复. */
-        try {
+       /* try {
             testProductIdByMoreThread(1,2,100000);//单机测试此场景,性能损失至少折半!
         } catch (InterruptedException e) {
             e.printStackTrace();
-        }
+        }*/
        /* SnowflakeIdFactory idWorker = new SnowflakeIdFactory(1, 2);
         long id = idWorker.nextId();
         log.info("id是{}",id);*/
+        System.out.println();
+        Random random = new Random();
+        int num = random.nextInt();
+        System.out.println();
     }
 
 }

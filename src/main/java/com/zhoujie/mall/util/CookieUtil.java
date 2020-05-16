@@ -45,7 +45,7 @@ public class CookieUtil {
             把保存用户登陆信息的cookie的域设置成一样即可。usercookie.Domain=".xxx.com";要注意，在域名前必须要加一个"."。
             这个设置在登陆和退出的时候都需要。
          */
-        ck.setDomain(COOKIE_DOMAIN);
+        ck.setDomain(COOKIE_DOMAIN);//cookie种在哪个域名下
         ck.setPath("/");//代表设置在根目录
         ck.setHttpOnly(true);//防止脚本访问cookie,一定程度上保护了用户信息
         //单位是秒。

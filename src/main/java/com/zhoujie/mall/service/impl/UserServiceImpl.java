@@ -7,6 +7,7 @@ import com.zhoujie.mall.pojo.User;
 import com.zhoujie.mall.service.IUserService;
 import com.zhoujie.mall.util.MD5Util;
 import com.zhoujie.mall.util.RedisShardedPoolUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -23,8 +24,7 @@ public class UserServiceImpl implements IUserService {
 
     public ServerResponse<User> login(String username, String password) {
         //todo ①检验用户是否存在
-       // int resultCount = userMapper.checkUsername(username);
-        int resultCount = 1;
+        int resultCount = userMapper.checkUsername(username);
         if(resultCount == 0 ){
             return ServerResponse.createByErrorMessage("用户名不存在");
         }
@@ -39,7 +39,6 @@ public class UserServiceImpl implements IUserService {
         user.setPassword(org.apache.commons.lang3.StringUtils.EMPTY);
         return ServerResponse.createBySuccess("登录成功",user);
     }
-
 
 
     public ServerResponse<String> register(User user){
@@ -63,7 +62,7 @@ public class UserServiceImpl implements IUserService {
     }
 
     public ServerResponse<String> checkValid(String str, String type){
-        if(org.apache.commons.lang3.StringUtils.isNotBlank(type)){
+        if(StringUtils.isNotBlank(type)){
             //开始校验
             if(Const.USERNAME.equals(type)){
                 int resultCount = userMapper.checkUsername(str);
